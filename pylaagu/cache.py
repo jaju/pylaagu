@@ -7,11 +7,6 @@ from platformdirs import user_cache_dir
 __appname = None
 __cachedir = None
 __conn = None
-
-jsonpickle.set_encoder_options('json',
-                               use_decimal=True, sort_keys=True)
-
-
 memoize_store = {}
 
 
