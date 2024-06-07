@@ -42,13 +42,12 @@ Outputs:
   returns: null
 ```
 
-A use of this functionality can be seen in (pylaagu/babumoshai.py)[pylaagu/babumoshai.py] to generate output in the (https://babashka.org)[babashka] pod communication format.
-```bash
+A use of this functionality can be seen in (pylaagu/babumoshai.py)[pylaagu/babumoshai.py] to generate output in the [https://babashka.org](babashka) pod communication format.
 
 ### Babashka
 TBD.
 
 ## Caching
-See (pylaagu/cache.py)[pylaagu/cache.py]. Two annotations exist
+See [pylaagu/cache.py](pylaagu/cache.py). Two annotations exist
 - `@cache` to persistently cache (using sqlite3) the return value of a function. This requires calling the `init_app` function with an appname.
 - `@memoize` to, well, memoize in memory the return value of a function.
