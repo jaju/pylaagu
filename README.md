@@ -42,7 +42,7 @@ Outputs:
   returns: null
 ```
 
-A use of this functionality can be seen in (pylaagu/babumoshai.py)[pylaagu/babumoshai.py] to generate output in the [https://babashka.org](babashka) pod communication format.
+A use of this functionality can be seen in (pylaagu/babumoshai.py)[pylaagu/babumoshai.py] to generate output in the [babashka](https://babashka.org/) pod communication format.
 
 ### Babashka
 TBD.
