@@ -36,7 +36,7 @@ def extract_function_signatures(filepath: str,
         class_functions = [n for n in c.body
                            if isinstance(n, ast.FunctionDef) and name_filter(n.name)]
         signatures.append({"name": c.name,
-                           "type": "function",
+                           "type": "class",
                            "functions": [__toobj_function(f)
                                          for f in class_functions]})
     for f in functions:
