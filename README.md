@@ -23,7 +23,7 @@ Outputs:
     "returns": null
   }
 ]
-```n
+```
 
 
 ```yaml
