@@ -23,23 +23,26 @@ def __toobj_function(f: ast.FunctionDef):
     }
 
 
+def __functions_at_node(node: ast.AST,
+                        name_filter: typing.Callable = lambda x: True) -> typing.List[ast.FunctionDef]:
+    return [n for n in node.body
+            if isinstance(n, ast.FunctionDef) and name_filter(n.name)]
+
+
 def extract_function_signatures(filepath: str,
                                 name_filter: typing.Callable = lambda x: True):
     signatures = []
     with open(filepath, "r") as f:
         code = f.read()
     node = ast.parse(code, filename=filepath)
-    functions = [n for n in node.body
-                 if isinstance(n, ast.FunctionDef) and name_filter(n.name)]
     classes = [n for n in node.body if isinstance(n, ast.ClassDef)]
     for c in classes:
-        class_functions = [n for n in c.body
-                           if isinstance(n, ast.FunctionDef) and name_filter(n.name)]
+        class_functions = __functions_at_node(c.body, name_filter)
         signatures.append({"name": c.name,
                            "type": "class",
                            "functions": [__toobj_function(f)
                                          for f in class_functions]})
-    for f in functions:
+    for f in __functions_at_node(node, name_filter):
         signatures.append(__toobj_function(f))
     return signatures
 
