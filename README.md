@@ -42,7 +42,7 @@ Outputs:
   returns: null
 ```
 
-A use of this functionality can be seen in (pylaagu/babumoshai.py)[pylaagu/babumoshai.py] to generate output in the [babashka](https://babashka.org/) pod communication format.
+A use of this functionality can be seen in [pylaagu/babumoshai.py](pylaagu/babumoshai.py) to generate output in the [babashka](https://babashka.org/) pod communication format.
 
 ### Babashka
 
@@ -121,13 +121,17 @@ Here's a simple babashka session that uses the above script. Notice that there i
 Babashka v1.3.190 REPL.
 Use :repl/quit or :repl/exit to quit the REPL.
 Clojure rocks, Bash reaches.
-
+```
+```clojure
 user=> (babashka.pods/load-pod ["./mlexplore/pod.py"])
 #:pod{:id "mlexplore"}
-user=> (mlexplore.hf/model_info "facebook/bart-large")
-[".gitattributes" "README.md" "config.json" "flax_model.msgpack" "merges.txt" "pytorch_model.bin" "rust_model.ot" "tf_model.h5" "tokenizer.json" "tokenizer_config.json" "vocab.json"]
-user=> (mlexplore.hf/url_of "foo" "bar")
-"https://huggingface.co/foo/resolve/main/bar"
+user=> (require '[cheshire.core :as json])
+nil
+user=> (json/parse-string (mlexplore.hf/model_info "facebook/bart-large") keyword)
+{:last_modified "2022-06-03T10:00:20+00:00", :tags ["transformers" "pytorch" "tf" "jax" "rust" "bart" "feature-extraction" "en" "arxiv:1910.13461" "license:apache-2.0" "endpoints_compatible" "region:us"], :_id "621ffdc136468d709f17adb9", :downloads 99383, :siblings [{:rfilename ".gitattributes", :size nil, :blob_id nil, :lfs nil} {:rfilename "README.md", :size nil, :blob_id nil, :lfs nil} {:rfilename "config.json", :size nil, :blob_id nil, :lfs nil} {:rfilename "flax_model.msgpack", :size nil, :blob_id nil, :lfs nil} {:rfilename "merges.txt", :size nil, :blob_id nil, :lfs nil} {:rfilename "pytorch_model.bin", :size nil, :blob_id nil, :lfs nil} {:rfilename "rust_model.ot", :size nil, :blob_id nil, :lfs nil} {:rfilename "tf_model.h5", :size nil, :blob_id nil, :lfs nil} {:rfilename "tokenizer.json", :size nil, :blob_id nil, :lfs nil} {:rfilename "tokenizer_config.json", :size nil, :blob_id nil, :lfs nil} {:rfilename "vocab.json", :size nil, :blob_id nil, :lfs nil}], :disabled false, :private false, :config {:architectures ["BartModel"], :model_type "bart", :tokenizer_config {}}, :transformersInfo {:auto_model "AutoModel", :custom_class nil, :pipeline_tag "feature-extraction", :processor "AutoTokenizer"}, :modelId "facebook/bart-large", :mask_token "<mask>", :gated false, :pipeline_tag "feature-extraction", :likes 159, :cardData {:tags nil, :datasets nil, :license "apache-2.0", :eval_results nil, :language "en", :model_name nil, :library_name nil, :base_model nil, :metrics nil}, :author "facebook", :lastModified "2022-06-03T10:00:20+00:00", :spaces ["enclap-team/enclap" "HaloMaster/chinesesummary" "webshop/amazon_shop" "eubinecto/idiomify" "MrVicente/RA-BART" "awacke1/HEDIS.Dash.Component.Top.Clinical.Terminology.Vocabulary" "andreslu/orion" "ka1kuk/litellm" "mikepastor11/PennwickFileAnalyzer" "theachyuttiwari/lfqa1" "Rschmaelzle/wikipedia-assistant" "adherent/Bart-gen-arg" "king007/wikipedia-assistant" "adumbrobot/facebook-bart-large" "asifmian/facebook-bart-large" "semaj83/ctmatch" "LMya/facebook-bart-large" "bagataway/facebook-bart-large" "ATForest/english" "sarat2hf/stock_information_app" "rtabrizi/RAG" "jfeng1115/marketing-analytics-bot" "vkthakur88/facebook-bart-large" "GuysTrans/MedChattRe" "GuysTrans/MedChattSumTran" "nonhuman/nnnn" "apekshik/bart-test" "Dhrumit1314/notivai-backend" "devvoi01/custom1" "rizkiduwinanto/challenge-NLP" "marcelomoreno26/Whatsapp-Chat-Summarizer-and-Analysis" "ieuniversity/Whatsapp_Analysis_Tool" "kenken999/litellm" "kenken999/litellmlope"], :id "facebook/bart-large", :safetensors nil, :library_name "transformers", :model_index nil, :card_data {:tags nil, :datasets nil, :license "apache-2.0", :eval_results nil, :language "en", :model_name nil, :library_name nil, :base_model nil, :metrics nil}, :transformers_info {:auto_model "AutoModel", :custom_class nil, :pipeline_tag "feature-extraction", :processor "AutoTokenizer"}, :sha "cb48c1365bd826bd521f650dc2e0940aee54720c", :widget_data nil, :created_at "2022-03-02T23:29:05+00:00"}
+user=> (mlexplore.hf/url_of "facebook/bart-large" "config.json")
+"https://huggingface.co/facebook/bart-large/resolve/main/config.json"
+user=>
 ```
 
 ## Caching
