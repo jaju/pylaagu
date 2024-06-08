@@ -25,13 +25,6 @@ def __toobj_function(f: ast.FunctionDef):
     }
 
 
-def __toobj_class_functions(c: ast.ClassDef, name_filter=lambda x: True):
-    class_functions = __functions_at_node(c, name_filter)
-    return {"name": c.name,
-            "type": "class",
-            "functions": [__toobj_function(f) for f in class_functions]}
-
-
 def __functions_at_node(node: ast.AST,
                         name_filter: typing.Callable =
                         lambda x: True) -> typing.List[ast.FunctionDef]:
@@ -43,6 +36,13 @@ def __classes_at_node(node: ast.AST) -> typing.List[ast.ClassDef]:
     return [n for n in node.body if isinstance(n, ast.ClassDef)]
 
 
+def __toobj_class_functions(c: ast.ClassDef, name_filter=lambda x: True):
+    class_functions = __functions_at_node(c, name_filter)
+    return {"name": c.name,
+            "type": "class",
+            "functions": [__toobj_function(f) for f in class_functions]}
+
+
 # Public API
 
 def extract_function_signatures(filepath: str,
@@ -50,8 +50,7 @@ def extract_function_signatures(filepath: str,
     signatures = []
     with open(filepath, "r") as f:
         node = ast.parse(f.read(), filename=filepath)
-    classes = __classes_at_node(node)
-    for c in classes:
+    for c in __classes_at_node(node):
         signatures.append(__toobj_class_functions(c, name_filter))
     for f in __functions_at_node(node, name_filter):
         signatures.append(__toobj_function(f))
@@ -64,12 +63,14 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(f"Usage: python {sys.argv[0]} <path>")
         sys.exit(1)
-    import json
-    import yaml
+    from .utils import is_public
     output = extract_function_signatures(sys.argv[1],
-                                         name_filter=lambda x:
-                                         not x.startswith("_"))
+                                         name_filter=is_public)
+    # JSON
+    import json
     print("JSON:")
     print(json.dumps(output, indent=2))
+    # YAML
+    import yaml
     print("\nYAML:")
     print(yaml.dump(output, sort_keys=False))

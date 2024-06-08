@@ -1,6 +1,7 @@
 import sys
 import json
 from .meta import extract_function_signatures
+from .utils import is_public
 
 
 def to_pod_namespaced_format(namespace: str, signatures: object):
@@ -17,7 +18,7 @@ if __name__ == "__main__":
     namespace = sys.argv[1]
     filepath = sys.argv[2]
     functions = extract_function_signatures(filepath,
-                                            name_filter=lambda x: not x.startswith("_"))
+                                            name_filter=is_public)
     outstring = json.dumps(to_pod_namespaced_format(namespace, functions),
                            indent=2)
     print(outstring)
