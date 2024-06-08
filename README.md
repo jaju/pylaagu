@@ -51,6 +51,8 @@ You can use the `pylaagu.babumoshai` module to generate output in the [babashka]
 Here's a sample usage. The code imports the `mlexplore.hf` module which has some basic huggingface hub functions. There's a small quirk to be aware of - the `mlexplore.hf` module depends on the `mlexplore` module, so you need to import the `mlexplore` module first.
 
 
+*Note*: This file is referred to as `mlexplore/pod.py` in the babashka-session code below.
+
 ```python
 #!/usr/bin/env python
 import sys
