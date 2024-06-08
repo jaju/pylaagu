@@ -3,6 +3,8 @@ import ast
 import typing
 
 
+# Private helpers
+
 def __toobj_function_arg(arg: ast.arg):
     retval = {"name": arg.arg}
     if arg.annotation:
@@ -19,33 +21,44 @@ def __toobj_function(f: ast.FunctionDef):
         "name": f.name,
         "type": "function",
         "args": __toobj_function_args(f),
-        "returns": f.returns
+        "returns": ast.unparse(f.returns) if f.returns else None
     }
 
 
+def __toobj_class_functions(c: ast.ClassDef, name_filter=lambda x: True):
+    class_functions = __functions_at_node(c, name_filter)
+    return {"name": c.name,
+            "type": "class",
+            "functions": [__toobj_function(f) for f in class_functions]}
+
+
 def __functions_at_node(node: ast.AST,
-                        name_filter: typing.Callable = lambda x: True) -> typing.List[ast.FunctionDef]:
+                        name_filter: typing.Callable =
+                        lambda x: True) -> typing.List[ast.FunctionDef]:
     return [n for n in node.body
             if isinstance(n, ast.FunctionDef) and name_filter(n.name)]
 
+
+def __classes_at_node(node: ast.AST) -> typing.List[ast.ClassDef]:
+    return [n for n in node.body if isinstance(n, ast.ClassDef)]
+
+
+# Public API
 
 def extract_function_signatures(filepath: str,
                                 name_filter: typing.Callable = lambda x: True):
     signatures = []
     with open(filepath, "r") as f:
-        code = f.read()
-    node = ast.parse(code, filename=filepath)
-    classes = [n for n in node.body if isinstance(n, ast.ClassDef)]
+        node = ast.parse(f.read(), filename=filepath)
+    classes = __classes_at_node(node)
     for c in classes:
-        class_functions = __functions_at_node(c.body, name_filter)
-        signatures.append({"name": c.name,
-                           "type": "class",
-                           "functions": [__toobj_function(f)
-                                         for f in class_functions]})
+        signatures.append(__toobj_class_functions(c, name_filter))
     for f in __functions_at_node(node, name_filter):
         signatures.append(__toobj_function(f))
     return signatures
 
+
+# CLI
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -56,5 +69,7 @@ if __name__ == "__main__":
     output = extract_function_signatures(sys.argv[1],
                                          name_filter=lambda x:
                                          not x.startswith("_"))
+    print("JSON:")
     print(json.dumps(output, indent=2))
+    print("\nYAML:")
     print(yaml.dump(output, sort_keys=False))
