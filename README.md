@@ -44,7 +44,7 @@ Outputs:
 
 A use of this functionality can be seen in [pylaagu/babumoshai.py](pylaagu/babumoshai.py) to generate output in the [babashka](https://babashka.org/) pod communication format.
 
-### Babashka
+### Babashka/Clojure Pods
 
 You can use the `pylaagu.babumoshai` module to generate output in the [babashka](https://babashka.org/) pod communication format, plus basic code to extract instructions from the messages, *run* the code and return the response back to the calling babashka process. It's all handled for you - the input and output need to be simple enough to be serialized to JSON and back.
 
@@ -57,7 +57,7 @@ Here's a sample usage. The code imports the `mlexplore.hf` module which has some
 #!/usr/bin/env python
 import sys
 import json
-from pylaagu.babumoshai import to_pod_namespaced_format, load_namespaces, dispatch, Namespace
+from pylaagu.babumoshai import to_pod_namespaced_format, load_namespaces, dispatch
 from bcoding import bencode, bdecode
 
 
@@ -74,17 +74,17 @@ def write(obj):
     sys.stdout.buffer.flush()
 
 
-namespaces_and_files = [
+files_namespaces_and_modules = [
     ("mlexplore/__init__.py", "mlexplore", "mlexplore"),
     ("mlexplore/hf.py", "mlexplore.hf", "mlexplore.hf"),
 ]
 
 
 def main():
-    namespaces = load_namespaces(namespaces_and_files)
-    exports = [to_pod_namespaced_format(namepace.namespace, namepace.signatures)
-               for namepace in namespaces.values()]
-    print(namespaces)
+    namespaces = load_namespaces(files_namespaces_and_modules)
+    exports = [to_pod_namespaced_format(namespaces[key].namespace,
+                                        namespaces[key].signatures)
+               for key in namespaces]
     while True:
         try:
             msg = read()
