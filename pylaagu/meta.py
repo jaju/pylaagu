@@ -116,8 +116,8 @@ if __name__ == "__main__":
     # JSON
     import json
     print("JSON:")
-    print(json.dumps([signature for signature in functions], indent=2))
-    print(json.dumps([signature for signature in classes], indent=2))
+    print(json.dumps([signature.__dict__ for signature in functions], indent=2))
+    print(json.dumps([signature.__dict__ for signature in classes], indent=2))
     # YAML
     import yaml
     print("\nYAML:")
