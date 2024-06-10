@@ -17,10 +17,12 @@ class Namespace:
 
 
 class NSExportSpec:
-    def __init__(self, module_name, file=None, ns_name=None):
+    def __init__(self, module_name, file=None, ns_name=None,
+                 export_meta=False):
         self.module_name = module_name
         self.ns_name = ns_name if ns_name else to_kebab(module_name)
         self.file = file
+        self.export_meta = export_meta
 
 
 @functools.cache
@@ -30,49 +32,51 @@ def __split_var(var):
     return ns, f
 
 
-def function_signatures_to_pod_format_functions(signatures: list[FunctionSignature]):
+def function_signatures_to_pod_format_functions(signatures:
+                                                list[FunctionSignature],
+                                                export_meta: bool = False):
     retval = []
     for signature in signatures:
         if type(signature) is FunctionSignature:
             export = {"name": to_kebab(signature.name)}
-            if signature.docstring:
+            if export_meta and signature.docstring:
                 export["meta"] = f"{{:doc \"{signature.docstring}\"}}"
             retval.append(export)
     return retval
 
 
-def module_to_pod_format_functions(modules):
+def module_to_pod_format_functions(modules, export_meta=False, function_name_filter=is_public):
     def function_filter(x):
-        return isfunction(x) and is_public(x.__name__)
+        return isfunction(x) and function_name_filter(x.__name__)
     functions = getmembers(modules, function_filter)
     retval = []
-    for function in functions:
-        export = {"name": to_kebab(function[0])}
-        if function.__doc__:
-            export["meta"] = f"{{:doc \"{function.__doc__}\"}}"
+    for function_name, function_object in functions:
+        export = {"name": to_kebab(function_name)}
+        if export_meta and function_object.__doc__:
+            export["meta"] = f"{{:doc \"{function_object.__doc__}\"}}"
         retval.append(export)
     return retval
 
 
-def load_namespace(nsexport_spec):
+def load_namespace(nsexport_spec, function_name_filter=is_public):
     if nsexport_spec.file:
         mod, resolved_file = load_module(nsexport_spec.module_name,
                                          nsexport_spec.file)
         assert abspath(nsexport_spec.file) == resolved_file
         signatures = extract_function_signatures(resolved_file,
-                                                 name_filter=is_public)
+                                                 name_filter=function_name_filter)
         debug(signatures)
-        vars = function_signatures_to_pod_format_functions(signatures)
+        vars = function_signatures_to_pod_format_functions(signatures, nsexport_spec.export_meta)
     else:
         mod, resolved_file = load_module(nsexport_spec.module_name)
-        vars = module_to_pod_format_functions(mod)
+        vars = module_to_pod_format_functions(mod, nsexport_spec.export_meta, function_name_filter)
     return Namespace(nsexport_spec.ns_name, vars, mod)
 
 
-def load_namespaces(nsexport_specs):
+def load_namespaces(nsexport_specs, function_name_filter=is_public):
     namespaces = {}
     for nsexport_spec in nsexport_specs:
-        ns = load_namespace(nsexport_spec)
+        ns = load_namespace(nsexport_spec, function_name_filter)
         namespaces[nsexport_spec.ns_name] = ns
     return namespaces
 

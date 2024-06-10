@@ -4,7 +4,7 @@ import typing
 import importlib.util as iu
 
 
-class FunctionSignature:
+class FunctionSignature(dict):
     def __init__(self, name: str, args: list[object], docstring: str, returns):
         self.name = name
         self.args = args
@@ -16,7 +16,7 @@ class FunctionSignature:
         "{self.docstring}, {self.returns}"
 
 
-class ClassSignature:
+class ClassSignature(dict):
     def __init__(self, name: str,
                  functions: list[FunctionSignature], docstring: str):
         self.name: str = name
@@ -61,9 +61,8 @@ def __classes_at_node(node: ast.AST) -> typing.List[ast.ClassDef]:
 
 def __encode_class_functions(c: ast.ClassDef, name_filter=lambda x: True):
     class_functions = __functions_at_node(c, name_filter)
-    return {"name": c.name,
-            "type": "class",
-            "functions": [__encode_function(f) for f in class_functions]}
+    return ClassSignature(c.name, [__encode_function(f) for f in class_functions],
+                          ast.get_docstring(c))
 
 
 # Public API
@@ -110,13 +109,17 @@ if __name__ == "__main__":
         print(f"Usage: python {sys.argv[0]} <path>")
         sys.exit(1)
     from .utils import is_public
-    output = extract_function_signatures(sys.argv[1],
-                                         name_filter=is_public)
+    functions = extract_function_signatures(sys.argv[1],
+                                            name_filter=is_public)
+    classes = extract_class_signatures(sys.argv[1],
+                                       name_filter=is_public)
     # JSON
     import json
     print("JSON:")
-    print(json.dumps(output, indent=2))
+    print(json.dumps([signature for signature in functions], indent=2))
+    print(json.dumps([signature for signature in classes], indent=2))
     # YAML
     import yaml
     print("\nYAML:")
-    print(yaml.dump(output, sort_keys=False))
+    print(yaml.dump(functions, sort_keys=False))
+    print(yaml.dump(classes, sort_keys=False))
