@@ -1,26 +1,27 @@
 import sys
 import ast
 import typing
+import importlib.util as iu
 
 
 # Private helpers
 
-def __toobj_function_arg(arg: ast.arg):
+def __encode_function_arg(arg: ast.arg):
     retval = {"name": arg.arg}
     if arg.annotation:
         retval["type"] = ast.unparse(arg.annotation).strip()
     return retval
 
 
-def __toobj_function_args(f: ast.FunctionDef):
-    return [__toobj_function_arg(arg) for arg in f.args.args]
+def __encode_function_args(f: ast.FunctionDef):
+    return [__encode_function_arg(arg) for arg in f.args.args]
 
 
-def __toobj_function(f: ast.FunctionDef):
+def __encode_function(f: ast.FunctionDef):
     return {
         "name": f.name,
         "type": "function",
-        "args": __toobj_function_args(f),
+        "args": __encode_function_args(f),
         "returns": ast.unparse(f.returns) if f.returns else None
     }
 
@@ -36,11 +37,11 @@ def __classes_at_node(node: ast.AST) -> typing.List[ast.ClassDef]:
     return [n for n in node.body if isinstance(n, ast.ClassDef)]
 
 
-def __toobj_class_functions(c: ast.ClassDef, name_filter=lambda x: True):
+def __encode_class_functions(c: ast.ClassDef, name_filter=lambda x: True):
     class_functions = __functions_at_node(c, name_filter)
     return {"name": c.name,
             "type": "class",
-            "functions": [__toobj_function(f) for f in class_functions]}
+            "functions": [__encode_function(f) for f in class_functions]}
 
 
 # Public API
@@ -51,16 +52,31 @@ def extract_function_signatures(filepath: str,
     with open(filepath, "r") as f:
         node = ast.parse(f.read(), filename=filepath)
     for c in __classes_at_node(node):
-        signatures.append(__toobj_class_functions(c, name_filter))
+        signatures.append(__encode_class_functions(c, name_filter))
     for f in __functions_at_node(node, name_filter):
-        signatures.append(__toobj_function(f))
+        signatures.append(__encode_function(f))
     return signatures
+
+
+def load_module_from_spec(spec):
+    mod = iu.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def load_module(module, file=None):
+    if file is None:
+        spec = iu.find_spec(module)
+    else:
+        spec = iu.spec_from_file_location(module, file)
+    return load_module_from_spec(spec), spec.origin
 
 
 # CLI
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
+    if len(sys.argv) != 2:
         print(f"Usage: python {sys.argv[0]} <path>")
         sys.exit(1)
     from .utils import is_public

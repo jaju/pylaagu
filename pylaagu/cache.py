@@ -48,23 +48,12 @@ def appname():
     return __appname
 
 
-def cache(f):
+def diskcache(f):
     def wrapper(*args, **kwargs):
         key = jsonpickle.encode(args, kwargs)
         value = cache_get(key)
         if value is None:
             value = f(*args)
             cache_set(key, value)
-        return value
-    return wrapper
-
-
-def memoize(f):
-    def wrapper(*args, **kwargs):
-        key = jsonpickle.encode(args, kwargs)
-        value = memoize_store.get(key)
-        if value is None:
-            value = f(*args)
-            memoize_store[key] = value
         return value
     return wrapper

@@ -1,8 +1,10 @@
 import sys
 import json
-import importlib.util as iu
-from .meta import extract_function_signatures
-from .utils import is_public
+from .meta import extract_function_signatures, load_module
+from .utils import is_public, to_snake, to_kebab
+from types import ModuleType
+from inspect import getmembers, isfunction
+import functools
 
 
 class Namespace:
@@ -15,22 +17,28 @@ class Namespace:
         return f"Namespace: {self.namespace}, {self.signatures}"
 
 
+@functools.cache
 def __split_var(var):
-    return var.split("/")
+    ns, f = var.split("/")
+    f = to_snake(f)
+    return ns, f
 
 
-def load_module(file, module):
-    spec = iu.spec_from_file_location(module, file)
-    mod = iu.module_from_spec(spec)
-    sys.modules[module] = mod
-    spec.loader.exec_module(mod)
-    return mod
+def load_namespaces(namespaces_and_modules):
+    namespaces = {}
+    for namespace, module in namespaces_and_modules:
+        mod, file = load_module(module)
+        signatures = extract_function_signatures(file,
+                                                 name_filter=is_public)
+        ns = Namespace(namespace, signatures, mod)
+        namespaces[namespace] = ns
+    return namespaces
 
 
-def load_namespaces(files_namespaces_and_modules):
+def load_namespaces_from_files(files_namespaces_and_modules):
     namespaces = {}
     for file, namespace, module in files_namespaces_and_modules:
-        mod = load_module(file, module)
+        mod = load_module(module, file)
         signatures = extract_function_signatures(file,
                                                  name_filter=is_public)
         ns = Namespace(namespace, signatures, mod)
@@ -44,9 +52,14 @@ def dispatch(namespaces, var, args):
     return getattr(module, f)(*args)
 
 
-def to_pod_namespaced_format(namespace: str, signatures: list[object]) -> dict[object]:
-    functions = [{"name": x["name"]}
-                 for x in signatures if x["type"] == "function"]
+def to_pod_namespaced_format(namespace: str,
+                             signatures_or_module: list[object] | ModuleType) -> dict[object]:
+    if isinstance(signatures_or_module, list):
+        functions = [{"name": to_kebab(x["name"])}
+                     for x in signatures_or_module if x["type"] == "function"]
+    else:
+        functions = [{"name": x[0]}
+                     for x in getmembers(signatures_or_module, isfunction)]
     return {"name": namespace,
             "vars": functions}
 
