@@ -1,5 +1,9 @@
 # Py.Laagu
 
+Python utilities for building upon. No dependencies outside the standard library.
+Quick inspection of Python code files, and helpful utilities for building babashka pods quickly which automatically inspects and exposes functions in Python modules to babashka/clojure via namespaces, and automatically dispatches to the appropriate python functions without having to write handlers for each function.
+
+WIP - First cut, working version. Improvements 
 
 ## Sketch the functional landscape of a Python module
 
@@ -267,6 +271,7 @@ python -m pylaagu.babumoshai huggingface_hub.hf_api
 ```
 
 ## Caching
-See [pylaagu/cache.py](pylaagu/cache.py). Two annotations exist
-- `@cache` to persistently cache (using sqlite3) the return value of a function. This requires calling the `init_app` function with an appname.
-- `@memoize` to, well, memoize in memory the return value of a function.
+See [pylaagu/cache.py](pylaagu/cache.py). There's one annotation that is useful for caching the return value of functions, on disk, backed by sqlite3. This is useful for functions that are expensive to compute and whose return value is deterministic. The cache is invalidated if the function signature changes.
+
+```python
+- `@diskcache` to persistently cache (using sqlite3) the return value of a function. This requires calling the `init_app` function with an appname.
