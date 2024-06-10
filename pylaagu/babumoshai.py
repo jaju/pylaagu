@@ -1,7 +1,7 @@
 import sys
 import json
 from .meta import extract_function_signatures, load_module
-from .utils import is_public, to_snake, to_kebab
+from .utils import debug, is_public, to_snake, to_kebab
 from types import ModuleType
 from inspect import getmembers, isfunction
 import functools
@@ -38,7 +38,8 @@ def load_namespaces(namespaces_and_modules):
 def load_namespaces_from_files(files_namespaces_and_modules):
     namespaces = {}
     for file, namespace, module in files_namespaces_and_modules:
-        mod = load_module(module, file)
+        mod, resolved_file = load_module(module, file)
+        # TODO: Check that the returned file is the same as the input file
         signatures = extract_function_signatures(file,
                                                  name_filter=is_public)
         ns = Namespace(namespace, signatures, mod)
@@ -48,6 +49,7 @@ def load_namespaces_from_files(files_namespaces_and_modules):
 
 def dispatch(namespaces, var, args):
     ns, f = __split_var(var)
+    debug(f"Dispatching {var} in {ns} with python function {f} and args {args}")
     module = namespaces[ns].module
     return getattr(module, f)(*args)
 
