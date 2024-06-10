@@ -4,6 +4,29 @@ import typing
 import importlib.util as iu
 
 
+class FunctionSignature:
+    def __init__(self, name: str, args: list[object], docstring: str, returns):
+        self.name = name
+        self.args = args
+        self.docstring = docstring
+        self.returns = returns
+
+    def __repr__(self):
+        return f"FunctionSignature: {self.name}, {self.args}, "
+        "{self.docstring}, {self.returns}"
+
+
+class ClassSignature:
+    def __init__(self, name: str,
+                 functions: list[FunctionSignature], docstring: str):
+        self.name: str = name
+        self.functions: list[FunctionSignature] = functions
+        self.docstring: str = docstring
+
+    def __str__(self):
+        return f"ClassSignature: {self.name}, {self.functions}"
+
+
 # Private helpers
 
 def __encode_function_arg(arg: ast.arg):
@@ -18,12 +41,11 @@ def __encode_function_args(f: ast.FunctionDef):
 
 
 def __encode_function(f: ast.FunctionDef):
-    return {
-        "name": f.name,
-        "type": "function",
-        "args": __encode_function_args(f),
-        "returns": ast.unparse(f.returns) if f.returns else None
-    }
+    return FunctionSignature(f.name,
+                             __encode_function_args(f),
+                             ast.get_docstring(f),
+                             ast.unparse(f.returns)
+                             if f.returns else None)
 
 
 def __functions_at_node(node: ast.AST,
@@ -51,10 +73,18 @@ def extract_function_signatures(filepath: str,
     signatures = []
     with open(filepath, "r") as f:
         node = ast.parse(f.read(), filename=filepath)
-    for c in __classes_at_node(node):
-        signatures.append(__encode_class_functions(c, name_filter))
     for f in __functions_at_node(node, name_filter):
         signatures.append(__encode_function(f))
+    return signatures
+
+
+def extract_class_signatures(filepath: str,
+                             name_filter: typing.Callable = lambda x: True):
+    signatures = []
+    with open(filepath, "r") as f:
+        node = ast.parse(f.read(), filename=filepath)
+    for c in __classes_at_node(node):
+        signatures.append(__encode_class_functions(c, name_filter))
     return signatures
 
 
