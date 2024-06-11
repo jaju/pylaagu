@@ -21,11 +21,13 @@ class NSExportSpec:
     def __init__(self, module_name: str,
                  file: str = None,
                  ns_name: str = None,
-                 export_meta: bool = False):
+                 export_meta: bool = False,
+                 export_module_imports: bool = False):
         self.module_name: str = module_name
         self.ns_name: str = ns_name if ns_name else to_kebab(module_name)
         self.file: str = file
         self.export_meta: bool = export_meta
+        self.export_module_imports = export_module_imports
 
 
 @functools.cache
@@ -50,10 +52,11 @@ def function_signatures_to_pod_format_functions(signatures:
 
 def module_to_pod_format_functions(module,
                                    export_meta: bool = False,
+                                   export_module_imports: bool = False,
                                    function_name_filter: Callable = is_public):
     def function_filter(x):
         return (isfunction(x) and
-                x.__module__ == module.__name__ and
+                (export_module_imports or x.__module__ == module.__name__) and
                 function_name_filter(x.__name__))
     functions = getmembers(module, function_filter)
     retval = []
@@ -79,6 +82,7 @@ def load_namespace(nsexport_spec, function_name_filter=is_public):
         mod, resolved_file = load_module(nsexport_spec.module_name)
         vars = module_to_pod_format_functions(mod,
                                               nsexport_spec.export_meta,
+                                              nsexport_spec.export_module_imports,
                                               function_name_filter)
     return Namespace(nsexport_spec.ns_name, vars, mod)
 
@@ -111,7 +115,7 @@ if __name__ == "__main__":
     module_name = sys.argv[1]
     filepath = sys.argv[2] if len(sys.argv) > 2 else None
     namespace = sys.argv[3] if len(sys.argv) == 4 else None
-    ns = load_namespace(NSExportSpec(module_name, filepath, namespace))
+    ns = load_namespace(NSExportSpec(module_name, filepath, namespace, False, True))
     export = to_pod_namespaced_format(ns)
     import pprint
     pprint.pp(export)
