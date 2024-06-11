@@ -44,8 +44,7 @@ def __encode_function(f: ast.FunctionDef):
     return FunctionSignature(f.name,
                              __encode_function_args(f),
                              ast.get_docstring(f),
-                             ast.unparse(f.returns)
-                             if f.returns else None)
+                             ast.unparse(f.returns) if f.returns else None)
 
 
 def __functions_at_node(node: ast.AST,
@@ -61,7 +60,8 @@ def __classes_at_node(node: ast.AST) -> typing.List[ast.ClassDef]:
 
 def __encode_class_functions(c: ast.ClassDef, name_filter=lambda x: True):
     class_functions = __functions_at_node(c, name_filter)
-    return ClassSignature(c.name, [__encode_function(f) for f in class_functions],
+    return ClassSignature(c.name,
+                          [__encode_function(f) for f in class_functions],
                           ast.get_docstring(c))
 
 
@@ -94,11 +94,11 @@ def load_module_from_spec(spec):
     return mod
 
 
-def load_module(module, file=None):
+def load_module(module_name: str, file: str = None):
     if file is None:
-        spec = iu.find_spec(module)
+        spec = iu.find_spec(module_name)
     else:
-        spec = iu.spec_from_file_location(module, file)
+        spec = iu.spec_from_file_location(module_name, file)
     return load_module_from_spec(spec), spec.origin
 
 

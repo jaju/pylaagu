@@ -4,12 +4,13 @@ from .utils import is_public, to_snake, to_kebab, debug
 from inspect import getmembers, isfunction
 import functools
 from os.path import abspath
+from typing import Callable
 
 
 class Namespace:
-    def __init__(self, name, vars, module):
-        self.name = name
-        self.vars = vars
+    def __init__(self, name: str, vars: list[object], module):
+        self.name: str = name
+        self.vars: list[object] = vars
         self.module = module
 
     def __repr__(self):
@@ -17,12 +18,14 @@ class Namespace:
 
 
 class NSExportSpec:
-    def __init__(self, module_name, file=None, ns_name=None,
-                 export_meta=False):
-        self.module_name = module_name
-        self.ns_name = ns_name if ns_name else to_kebab(module_name)
-        self.file = file
-        self.export_meta = export_meta
+    def __init__(self, module_name: str,
+                 file: str = None,
+                 ns_name: str = None,
+                 export_meta: bool = False):
+        self.module_name: str = module_name
+        self.ns_name: str = ns_name if ns_name else to_kebab(module_name)
+        self.file: str = file
+        self.export_meta: bool = export_meta
 
 
 @functools.cache
@@ -45,10 +48,14 @@ def function_signatures_to_pod_format_functions(signatures:
     return retval
 
 
-def module_to_pod_format_functions(modules, export_meta=False, function_name_filter=is_public):
+def module_to_pod_format_functions(module,
+                                   export_meta: bool = False,
+                                   function_name_filter: Callable = is_public):
     def function_filter(x):
-        return isfunction(x) and function_name_filter(x.__name__)
-    functions = getmembers(modules, function_filter)
+        return (isfunction(x) and
+                x.__module__ == module.__name__ and
+                function_name_filter(x.__name__))
+    functions = getmembers(module, function_filter)
     retval = []
     for function_name, function_object in functions:
         export = {"name": to_kebab(function_name)}
@@ -66,10 +73,13 @@ def load_namespace(nsexport_spec, function_name_filter=is_public):
         signatures = extract_function_signatures(resolved_file,
                                                  name_filter=function_name_filter)
         debug(signatures)
-        vars = function_signatures_to_pod_format_functions(signatures, nsexport_spec.export_meta)
+        vars = function_signatures_to_pod_format_functions(signatures,
+                                                           nsexport_spec.export_meta)
     else:
         mod, resolved_file = load_module(nsexport_spec.module_name)
-        vars = module_to_pod_format_functions(mod, nsexport_spec.export_meta, function_name_filter)
+        vars = module_to_pod_format_functions(mod,
+                                              nsexport_spec.export_meta,
+                                              function_name_filter)
     return Namespace(nsexport_spec.ns_name, vars, mod)
 
 
