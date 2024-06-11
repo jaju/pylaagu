@@ -269,9 +269,3 @@ python -m pylaagu.babumoshai huggingface_hub.hf_api
           {'name': 'validate-hf-hub-args'},
           {'name': 'wraps'}]}
 ```
-
-## Caching
-See [pylaagu/cache.py](pylaagu/cache.py). There's one annotation that is useful for caching the return value of functions, on disk, backed by sqlite3. This is useful for functions that are expensive to compute and whose return value is deterministic. The cache is invalidated if the function signature changes.
-
-```python
-- `@diskcache` to persistently cache (using sqlite3) the return value of a function. This requires calling the `init_app` function with an appname.
