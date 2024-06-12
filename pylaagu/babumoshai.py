@@ -22,12 +22,14 @@ class NSExportSpec:
                  file: str = None,
                  ns_name: str = None,
                  export_meta: bool = False,
-                 export_module_imports: bool = False):
+                 export_module_imports: bool = False,
+                 fail_on_error: bool = True):
         self.module_name: str = module_name
         self.ns_name: str = ns_name if ns_name else to_kebab(module_name)
         self.file: str = file
         self.export_meta: bool = export_meta
         self.export_module_imports = export_module_imports
+        self.fail_on_error = fail_on_error
 
 
 @functools.cache
@@ -71,7 +73,11 @@ def module_to_pod_format_functions(module,
 def load_namespace(nsexport_spec, function_name_filter=is_public):
     if nsexport_spec.file:
         mod, resolved_file = load_module(nsexport_spec.module_name,
-                                         nsexport_spec.file)
+                                         nsexport_spec.file,
+                                         fail_on_error=nsexport_spec.fail_on_error)
+        if not nsexport_spec.fail_on_error and mod is None:
+            debug(f"Failed to load module {nsexport_spec.module_name}. Skipping...")
+            return None
         assert abspath(nsexport_spec.file) == resolved_file
         signatures = extract_function_signatures(resolved_file,
                                                  name_filter=function_name_filter)
@@ -98,7 +104,10 @@ def load_namespaces(nsexport_specs, function_name_filter=is_public):
 def dispatch(namespaces, var, args):
     ns, f = __split_var(var)
     module = namespaces[ns].module
-    return getattr(module, f)(*args)
+    if args:
+        return getattr(module, f)(*args)
+    else:
+        return getattr(module, f)()
 
 
 def to_pod_namespaced_format(ns: Namespace) -> dict[object]:

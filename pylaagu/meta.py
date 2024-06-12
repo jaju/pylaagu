@@ -87,19 +87,31 @@ def extract_class_signatures(filepath: str,
     return signatures
 
 
-def load_module_from_spec(spec):
+def __load_module_from_spec(spec):
     mod = iu.module_from_spec(spec)
     sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)
     return mod
 
 
-def load_module(module_name: str, file: str = None):
+def load_module(module_name: str, file: str = None, fail_on_error=True):
     if file is None:
         spec = iu.find_spec(module_name)
     else:
         spec = iu.spec_from_file_location(module_name, file)
-    return load_module_from_spec(spec), spec.origin
+    if spec is None:
+        if fail_on_error:
+            raise ImportError(f"Could not find module {module_name}")
+        else:
+            return None, None
+    try:
+        mod = __load_module_from_spec(spec)
+    except FileNotFoundError as e:
+        if fail_on_error:
+            raise e
+        else:
+            return None, None
+    return mod, spec.origin
 
 
 # CLI
