@@ -1,10 +1,11 @@
-import sys
-from .meta import extract_function_signatures, load_module, FunctionSignature
-from .utils import is_public, to_snake, to_kebab, debug
-from inspect import getmembers, isfunction
 import functools
+import sys
+from inspect import getmembers, isfunction
 from os.path import abspath
 from typing import Callable
+
+from .meta import extract_function_signatures, load_module, FunctionSignature
+from .utils import is_public, to_snake, to_kebab, debug
 
 
 class Namespace:
@@ -110,7 +111,7 @@ def dispatch(namespaces, var, args):
         return getattr(module, f)()
 
 
-def to_pod_namespaced_format(ns: Namespace) -> dict[object]:
+def to_pod_namespaced_format(ns: Namespace) -> dict[str, str | list[object]]:
     return {"name": ns.name,
             "vars": ns.vars}
 

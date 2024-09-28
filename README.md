@@ -3,14 +3,14 @@
 Python utilities for building upon. No dependencies outside the standard library.
 Quick inspection of Python code files, and helpful utilities for building babashka pods quickly which automatically inspects and exposes functions in Python modules to babashka/clojure via namespaces, and automatically dispatches to the appropriate python functions without having to write handlers for each function.
 
-WIP - First cut, working version. Improvements 
+WIP - First cut, working version. Improvements and features to be added.
 
 ## Sketch the functional landscape of a Python module
 
-See the `main` function in `pylaagu/meta.py` for an example of how to use the `pylaagu.meta` module to extract the function signatures from a Python module.
+See the script `main.py` in the root directory for an example of how to use the `pylaagu.meta` module to extract the function signatures from a Python module.
 
 ```bash
-python pylaagu/meta.py pylaagu/meta.py
+python main.py pylaagu/meta.py -o json
 ```
 
 Outputs:

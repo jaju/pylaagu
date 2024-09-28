@@ -1,30 +1,30 @@
-import sys
 import ast
-import typing
 import importlib.util as iu
+import sys
+import typing
 
 
 class FunctionSignature(dict):
     def __init__(self, name: str, args: list[object], docstring: str, returns):
+        super().__init__()
         self.name = name
         self.args = args
         self.docstring = docstring
         self.returns = returns
 
     def __repr__(self):
-        return f"FunctionSignature: {self.name}, {self.args}, "
-        "{self.docstring}, {self.returns}"
+        return f"FunctionSignature: {self.docstring}\n{self.name}({self.args}): {self.returns}"
 
 
 class ClassSignature(dict):
-    def __init__(self, name: str,
-                 functions: list[FunctionSignature], docstring: str):
+    def __init__(self, name: str, functions: list[FunctionSignature], docstring: str):
+        super().__init__()
         self.name: str = name
         self.functions: list[FunctionSignature] = functions
         self.docstring: str = docstring
 
     def __str__(self):
-        return f"ClassSignature: {self.name}, {self.functions}"
+        return f"ClassSignature: {self.name}\n{self.functions}"
 
 
 # Private helpers
@@ -112,26 +112,3 @@ def load_module(module_name: str, file: str = None, fail_on_error=True):
         else:
             return None, None
     return mod, spec.origin
-
-
-# CLI
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(f"Usage: python {sys.argv[0]} <path>")
-        sys.exit(1)
-    from .utils import is_public
-    functions = extract_function_signatures(sys.argv[1],
-                                            name_filter=is_public)
-    classes = extract_class_signatures(sys.argv[1],
-                                       name_filter=is_public)
-    # JSON
-    import json
-    print("JSON:")
-    print(json.dumps([signature.__dict__ for signature in functions], indent=2))
-    print(json.dumps([signature.__dict__ for signature in classes], indent=2))
-    # YAML
-    import yaml
-    print("\nYAML:")
-    print(yaml.dump(functions, sort_keys=False))
-    print(yaml.dump(classes, sort_keys=False))
