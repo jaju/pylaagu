@@ -126,12 +126,15 @@ def load_module(module_name: str, file: str = None, fail_on_error=True):
 
 def _main():
     if len(sys.argv) < 2:
-        print(f"Usage: python {sys.argv[0]} <module-name> [filepath]")
+        print(f"Usage: python {sys.argv[0]} <filepath>")
         sys.exit(1)
-    module_name = sys.argv[1]
-    filepath = sys.argv[2] if len(sys.argv) > 2 else None
-    import pprint
-
+    filepath = sys.argv[1]
+    print("Function signatures:")
+    for sig in function_signatures(filepath):
+        print(sig)
+    print("Class signatures:")
+    for sig in class_signatures(filepath):
+        print(sig)
 
 if __name__ == "__main__":
     _main()
