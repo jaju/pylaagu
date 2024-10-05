@@ -65,7 +65,7 @@ import sys
 import json
 from bcoding import bencode, bdecode
 from pylaagu.babumoshai import (NSExportSpec,
-                                to_pod_namespaced_format,
+                                to_pod_export_format,
                                 load_as_namespace, load_as_namespaces,
                                 dispatch)
 from pylaagu.utils import debug
@@ -88,7 +88,7 @@ nsexport_specs = [
 
 def main(nsexport_specs: list[NSExportSpec] = nsexport_specs):
     namespaces = load_as_namespaces(nsexport_specs)
-    exports = [to_pod_namespaced_format(ns)
+    exports = [to_pod_export_format(ns)
                for ns in namespaces.values()]
     exports.append({"name": "pylaagu.babumoshai", "vars": [
         {"name": "load-namespace"}
@@ -111,7 +111,7 @@ def main(nsexport_specs: list[NSExportSpec] = nsexport_specs):
                 if var == "pylaagu.babumoshai/load-namespace":
                     ns = load_as_namespace(NSExportSpec(*args))
                     debug(ns)
-                    exports.append(to_pod_namespaced_format(ns))
+                    exports.append(to_pod_export_format(ns))
                     debug(exports)
                     write({"status": ["done"], "id": id, "format": "json", "namespaces": exports})
                 else:
