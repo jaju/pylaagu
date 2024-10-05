@@ -3,6 +3,8 @@ import importlib.util as iu
 import sys
 import typing
 
+from numpy.matlib import empty
+
 
 class FunctionSignature(dict):
     def __init__(self, name: str, args: list[object], docstring: str, returns):
@@ -16,7 +18,7 @@ class FunctionSignature(dict):
         return f"\nDoc: ''':{self.docstring}'''" if self.docstring else ""
 
     def __repr__(self):
-        return f"def {self.name}({self.args}) -> {self.returns}" + self.__doc()
+        return f"def {self.name}({", ".join(s['name'] for s in self.args)}) -> {self.returns}" + self.__doc()
 
 
 class ClassSignature(dict):
@@ -129,12 +131,24 @@ def _main():
         print(f"Usage: python {sys.argv[0]} <filepath>")
         sys.exit(1)
     filepath = sys.argv[1]
-    print("Function signatures:")
-    for sig in function_signatures(filepath):
-        print(sig)
-    print("Class signatures:")
-    for sig in class_signatures(filepath):
-        print(sig)
+
+    function_sigs = function_signatures(filepath)
+    if len(function_sigs) > 0:
+        print("Function signatures:")
+        print("--------------------")
+        for sig in function_sigs:
+            print(sig)
+        print("\n")
+
+    class_sigs = class_signatures(filepath)
+    if len(class_sigs) > 0:
+        print("Class signatures:")
+        print("-----------------")
+        for sig in class_sigs:
+            print(sig)
+        print("\n")
+
+
 
 if __name__ == "__main__":
     _main()

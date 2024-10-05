@@ -98,17 +98,15 @@ def to_pod_export_format(ns: Namespace) -> dict[str, str | list[object]]:
 
 
 # CLI
-
 def _main():
     if len(sys.argv) < 2:
         print(f"Usage: python {sys.argv[0]} <module-name> [namespace]")
         sys.exit(1)
     module_name = sys.argv[1]
     namespace = sys.argv[2] if len(sys.argv) == 4 else None
-    ns = load_as_namespace(NSExportSpec(module_name, namespace, False, True))
+    ns = load_as_namespace(NSExportSpec(module_name, namespace, True, True))
     export = to_pod_export_format(ns)
-    import pprint
-    pprint.pp(export)
+    print(export)
 
 
 if __name__ == "__main__":
