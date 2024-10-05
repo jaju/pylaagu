@@ -13,9 +13,9 @@ if len(args) != 1:
     sys.exit(1)
 
 from pylaagu.utils import is_public
-from pylaagu.meta import extract_function_signatures, extract_class_signatures
-functions = extract_function_signatures(file, name_filter=is_public)
-classes = extract_class_signatures(file, name_filter=is_public)
+from pylaagu.meta import function_signatures, class_signatures
+functions = function_signatures(file, name_filter=is_public)
+classes = class_signatures(file, name_filter=is_public)
 
 if output_format == "json":
     import json

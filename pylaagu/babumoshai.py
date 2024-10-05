@@ -4,7 +4,7 @@ from inspect import getmembers, isfunction
 from os.path import abspath
 from typing import Callable
 
-from .meta import extract_function_signatures, load_module, FunctionSignature
+from .meta import function_signatures, load_module, FunctionSignature
 from .utils import is_public, to_snake, to_kebab, debug
 
 
@@ -15,15 +15,19 @@ class Namespace:
         self.module = module
 
     def __repr__(self):
-        return f"Namespace: {self.name}, {self.vars}"
+        return f"%r(this={self.name}, vars={self.vars}, module={self.module})" % self.name
+
+    def get(self, item):
+        return next((x for x in self.vars if x["name"] == item), None)
 
 
 class NSExportSpec:
-    def __init__(self, module_name: str,
+    def __init__(self,
+                 module_name: str,
                  file: str = None,
                  ns_name: str = None,
-                 export_meta: bool = False,
-                 export_module_imports: bool = False,
+                 export_meta: bool = True,
+                 export_module_imports: bool = True,
                  fail_on_error: bool = True):
         self.module_name: str = module_name
         self.ns_name: str = ns_name if ns_name else to_kebab(module_name)
@@ -71,7 +75,7 @@ def module_to_pod_format_functions(module,
     return retval
 
 
-def load_namespace(nsexport_spec, function_name_filter=is_public):
+def load_as_namespace(nsexport_spec, function_name_filter=is_public):
     if nsexport_spec.file:
         mod, resolved_file = load_module(nsexport_spec.module_name,
                                          nsexport_spec.file,
@@ -80,8 +84,8 @@ def load_namespace(nsexport_spec, function_name_filter=is_public):
             debug(f"Failed to load module {nsexport_spec.module_name}. Skipping...")
             return None
         assert abspath(nsexport_spec.file) == resolved_file
-        signatures = extract_function_signatures(resolved_file,
-                                                 name_filter=function_name_filter)
+        signatures = function_signatures(resolved_file,
+                                         name_filter=function_name_filter)
         debug(signatures)
         vars = function_signatures_to_pod_format_functions(signatures,
                                                            nsexport_spec.export_meta)
@@ -94,10 +98,10 @@ def load_namespace(nsexport_spec, function_name_filter=is_public):
     return Namespace(nsexport_spec.ns_name, vars, mod)
 
 
-def load_namespaces(nsexport_specs, function_name_filter=is_public):
+def load_as_namespaces(nsexport_specs, function_name_filter=is_public):
     namespaces = {}
     for nsexport_spec in nsexport_specs:
-        ns = load_namespace(nsexport_spec, function_name_filter)
+        ns = load_as_namespace(nsexport_spec, function_name_filter)
         namespaces[nsexport_spec.ns_name] = ns
     return namespaces
 
@@ -117,7 +121,8 @@ def to_pod_namespaced_format(ns: Namespace) -> dict[str, str | list[object]]:
 
 
 # CLI
-if __name__ == "__main__":
+
+def _main():
     if len(sys.argv) < 2:
         print(f"Usage: python {sys.argv[0]} <module-name> "
               "[filepath] [namespace]")
@@ -125,7 +130,11 @@ if __name__ == "__main__":
     module_name = sys.argv[1]
     filepath = sys.argv[2] if len(sys.argv) > 2 else None
     namespace = sys.argv[3] if len(sys.argv) == 4 else None
-    ns = load_namespace(NSExportSpec(module_name, filepath, namespace, False, True))
+    ns = load_as_namespace(NSExportSpec(module_name, filepath, namespace, False, True))
     export = to_pod_namespaced_format(ns)
     import pprint
     pprint.pp(export)
+
+
+if __name__ == "__main__":
+    _main()

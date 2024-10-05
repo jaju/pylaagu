@@ -9,22 +9,28 @@ class FunctionSignature(dict):
         super().__init__()
         self.name = name
         self.args = args
-        self.docstring = docstring
         self.returns = returns
+        self.docstring = docstring
+
+    def __doc(self):
+        return f"\nDoc: ''':{self.docstring}'''" if self.docstring else ""
 
     def __repr__(self):
-        return f"FunctionSignature: {self.docstring}\n{self.name}({self.args}): {self.returns}"
+        return f"def {self.name}({self.args}) -> {self.returns}" + self.__doc()
 
 
 class ClassSignature(dict):
-    def __init__(self, name: str, functions: list[FunctionSignature], docstring: str):
+    def __init__(self, name: str, docstring: str, functions: list[FunctionSignature]):
         super().__init__()
         self.name: str = name
-        self.functions: list[FunctionSignature] = functions
         self.docstring: str = docstring
+        self.functions: list[FunctionSignature] = functions
+
+    def __doc(self):
+        return f"''': Doc:: {self.docstring}'''\n" if self.docstring else ""
 
     def __str__(self):
-        return f"ClassSignature: {self.name}\n{self.functions}"
+        return f"class {self.name}:\n" + self.__doc() + "\n" + "\n".join(map(str, self.functions))
 
 
 # Private helpers
@@ -40,7 +46,7 @@ def __encode_function_args(f: ast.FunctionDef):
     return [__encode_function_arg(arg) for arg in f.args.args]
 
 
-def __encode_function(f: ast.FunctionDef):
+def __encode_function(f: ast.FunctionDef) -> FunctionSignature:
     return FunctionSignature(f.name,
                              __encode_function_args(f),
                              ast.get_docstring(f),
@@ -58,17 +64,20 @@ def __classes_at_node(node: ast.AST) -> typing.List[ast.ClassDef]:
     return [n for n in node.body if isinstance(n, ast.ClassDef)]
 
 
-def __encode_class_functions(c: ast.ClassDef, name_filter=lambda x: True):
+def __encode_class(c: ast.ClassDef, name_filter=lambda x: True):
     class_functions = __functions_at_node(c, name_filter)
-    return ClassSignature(c.name,
-                          [__encode_function(f) for f in class_functions],
-                          ast.get_docstring(c))
+    return ClassSignature(c.name, ast.get_docstring(c), [__encode_function(f) for f in class_functions])
 
 
 # Public API
 
-def extract_function_signatures(filepath: str,
-                                name_filter: typing.Callable = lambda x: True):
+def function_signatures(filepath: str,
+                        name_filter: typing.Callable = lambda x: True) -> list[FunctionSignature]:
+    """Extracts function signatures from a python file.
+    Args:
+        filepath (str): Path to the python file.
+        name_filter (typing.Callable, optional): Function to filter function names. Default is to accept all names.
+    """
     signatures = []
     with open(filepath, "r") as f:
         node = ast.parse(f.read(), filename=filepath)
@@ -77,13 +86,13 @@ def extract_function_signatures(filepath: str,
     return signatures
 
 
-def extract_class_signatures(filepath: str,
-                             name_filter: typing.Callable = lambda x: True):
+def class_signatures(filepath: str,
+                     name_filter: typing.Callable = lambda x: True) -> list[ClassSignature]:
     signatures = []
     with open(filepath, "r") as f:
         node = ast.parse(f.read(), filename=filepath)
     for c in __classes_at_node(node):
-        signatures.append(__encode_class_functions(c, name_filter))
+        signatures.append(__encode_class(c, name_filter))
     return signatures
 
 

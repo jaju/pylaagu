@@ -66,7 +66,7 @@ import json
 from bcoding import bencode, bdecode
 from pylaagu.babumoshai import (NSExportSpec,
                                 to_pod_namespaced_format,
-                                load_namespace, load_namespaces,
+                                load_as_namespace, load_as_namespaces,
                                 dispatch)
 from pylaagu.utils import debug
 
@@ -83,11 +83,11 @@ def write(obj):
 nsexport_specs = [
     NSExportSpec("mlexplore", "mlexplore/__init__.py"),
     NSExportSpec("mlexplore.hf", "mlexplore/hf.py", export_meta=True),
-    NSExportSpec("huggingface_hub.hf_api", ns_name="hf-api"),]
+    NSExportSpec("huggingface_hub.hf_api", ns_name="hf-api"), ]
 
 
 def main(nsexport_specs: list[NSExportSpec] = nsexport_specs):
-    namespaces = load_namespaces(nsexport_specs)
+    namespaces = load_as_namespaces(nsexport_specs)
     exports = [to_pod_namespaced_format(ns)
                for ns in namespaces.values()]
     exports.append({"name": "pylaagu.babumoshai", "vars": [
@@ -109,7 +109,7 @@ def main(nsexport_specs: list[NSExportSpec] = nsexport_specs):
                 id = msg.get("id")
                 args = json.loads(msg.get("args"))
                 if var == "pylaagu.babumoshai/load-namespace":
-                    ns = load_namespace(NSExportSpec(*args))
+                    ns = load_as_namespace(NSExportSpec(*args))
                     debug(ns)
                     exports.append(to_pod_namespaced_format(ns))
                     debug(exports)
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         main()
     else:
         module = sys.argv[1]
-        print(load_namespace(NSExportSpec(module)))
+        print(load_as_namespace(NSExportSpec(module)))
         sys.exit(0)
 ```
 
