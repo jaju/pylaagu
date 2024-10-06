@@ -3,8 +3,6 @@ import importlib.util as iu
 import sys
 import typing
 
-from numpy.matlib import empty
-
 
 class FunctionSignature(dict):
     def __init__(self, name: str, args: list[object], docstring: str, returns):
@@ -147,7 +145,6 @@ def _main():
         for sig in class_sigs:
             print(sig)
         print("\n")
-
 
 
 if __name__ == "__main__":
