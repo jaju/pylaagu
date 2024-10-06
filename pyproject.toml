@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pylaagu"
-version = "0.1.0-alpha"
+version = "0.1.0-beta"
 description = ""
 authors = ["Ravindra Jaju <jaju@msync.org>"]
 readme = "README.md"
