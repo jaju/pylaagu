@@ -5,6 +5,7 @@ import typing
 
 
 class FunctionSignature(dict):
+    """Holds function signature information."""
     def __init__(self, name: str, args: list[object], docstring: str, returns):
         super().__init__()
         self.name = name
@@ -20,6 +21,7 @@ class FunctionSignature(dict):
 
 
 class ClassSignature(dict):
+    """Holds class functions signature information."""
     def __init__(self, name: str, docstring: str, functions: list[FunctionSignature]):
         super().__init__()
         self.name: str = name
@@ -88,6 +90,11 @@ def function_signatures(filepath: str,
 
 def class_signatures(filepath: str,
                      name_filter: typing.Callable = lambda x: True) -> list[ClassSignature]:
+    """Extracts all class signatures from the python file.
+    Args:
+        filepath (str): Path to the python file.
+        name_filter (typing.Callable, optional): Function to filter class names. Default is to accept all names.
+    """
     signatures = []
     with open(filepath, "r") as f:
         node = ast.parse(f.read(), filename=filepath)
@@ -104,6 +111,7 @@ def __load_module_from_spec(spec):
 
 
 def load_module(module_name: str, file: str = None, fail_on_error=True):
+    """Loads a module by name or file path. Returns the module and the file path discovered from the loaded spec."""
     if file is None:
         spec = iu.find_spec(module_name)
     else:

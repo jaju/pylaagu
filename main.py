@@ -17,13 +17,21 @@ from pylaagu.meta import function_signatures, class_signatures
 functions = function_signatures(file, name_filter=is_public)
 classes = class_signatures(file, name_filter=is_public)
 
+def underlined_string(s: str) -> str:
+    return s + "\n" + "-" * len(s)
+
 if output_format == "json":
     import json
+    print(underlined_string("Functions"))
     print(json.dumps([signature.__dict__ for signature in functions], indent=2))
+    print(underlined_string("Classes"))
     print(json.dumps([signature.__dict__ for signature in classes], indent=2))
 elif output_format == "yaml":
     import yaml
+    yaml.emitter.Emitter.prepare_tag = lambda self, tag: '' # https://github.com/yaml/pyyaml/issues/408#issuecomment-673067702
+    print(underlined_string("Functions"))
     print(yaml.dump(functions, sort_keys=False))
+    print(underlined_string("Classes"))
     print(yaml.dump(classes, sort_keys=False))
 else:
     print("Invalid output format. Choose either 'json' or 'yaml'")

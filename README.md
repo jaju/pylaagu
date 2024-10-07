@@ -13,12 +13,12 @@ See the script `main.py` in the root directory for an example of how to use the 
 python main.py pylaagu/meta.py -o json
 ```
 
-Outputs:
+## JSON Output
+### Function signatures
 ```json
 [
   {
-    "name": "extract_function_signatures",
-    "type": "function",
+    "name": "function_signatures",
     "args": [
       {
         "name": "filepath",
@@ -29,21 +29,105 @@ Outputs:
         "type": "typing.Callable"
       }
     ],
-    "returns": null
+    "returns": "list[FunctionSignature]",
+    "docstring": "Extracts function signatures from a python file.\nArgs:\n    filepath (str): Path to the python file.\n    name_filter (typing.Callable, optional): Function to filter function names. Default is to accept all names."
+  },
+  {
+    "name": "class_signatures",
+    "args": [
+      {
+        "name": "filepath",
+        "type": "str"
+      },
+      {
+        "name": "name_filter",
+        "type": "typing.Callable"
+      }
+    ],
+    "returns": "list[ClassSignature]",
+    "docstring": "Extracts all class signatures from the python file.\nArgs:\n    filepath (str): Path to the python file.\n    name_filter (typing.Callable, optional): Function to filter class names. Default is to accept all names."
+  },
+  {
+    "name": "load_module",
+    "args": [
+      {
+        "name": "module_name",
+        "type": "str"
+      },
+      {
+        "name": "file",
+        "type": "str"
+      },
+      {
+        "name": "fail_on_error"
+      }
+    ],
+    "returns": null,
+    "docstring": "Loads a module by name or file path. Returns the module and the file path discovered from the loaded spec."
   }
 ]
 ```
 
+### Class Signatures
+```json
+[
+  {
+    "name": "FunctionSignature",
+    "docstring": "Holds function signature information.",
+    "functions": []
+  },
+  {
+    "name": "ClassSignature",
+    "docstring": "Holds class functions signature information.",
+    "functions": []
+  }
+]
+```
 
+## YAML Output
+
+### Function signatures
 ```yaml
-- name: extract_function_signatures
-  type: function
+- name: function_signatures
   args:
-  - name: filepath
-    type: str
-  - name: name_filter
-    type: typing.Callable
+    - name: filepath
+      type: str
+    - name: name_filter
+      type: typing.Callable
+  returns: list[FunctionSignature]
+  docstring: "Extracts function signatures from a python file.\nArgs:\n    filepath\
+    \ (str): Path to the python file.\n    name_filter (typing.Callable, optional):\
+    \ Function to filter function names. Default is to accept all names."
+- name: class_signatures
+  args:
+    - name: filepath
+      type: str
+    - name: name_filter
+      type: typing.Callable
+  returns: list[ClassSignature]
+  docstring: "Extracts all class signatures from the python file.\nArgs:\n    filepath\
+    \ (str): Path to the python file.\n    name_filter (typing.Callable, optional):\
+    \ Function to filter class names. Default is to accept all names."
+- name: load_module
+  args:
+    - name: module_name
+      type: str
+    - name: file
+      type: str
+    - name: fail_on_error
   returns: null
+  docstring: Loads a module by name or file path. Returns the module and the file
+    path discovered from the loaded spec.
+```
+
+### Class Signatures
+```yaml
+- name: FunctionSignature
+  docstring: Holds function signature information.
+  functions: []
+- name: ClassSignature
+  docstring: Holds class functions signature information.
+  functions: []
 ```
 
 A use of this functionality can be seen in [pylaagu/babumoshai.py](pylaagu/babumoshai.py) to generate output in the [babashka](https://babashka.org/) pod communication format.
@@ -57,10 +141,11 @@ Here's a sample usage. The code imports the `mlexplore.hf` module which has some
 And in the tradition of Clojure, the function names are __kebab-cased__!
 
 
-*Note*: This file is referred to as `mlexplore/pod.py` in the babashka-session code below.
+*Note*: This file is referred to as `pod.py` in the babashka-session code below. (This file is from another dependent repository called [mlitchi](https://github.com/jaju/mlitchi)
 
 ```python
 #!/usr/bin/env python
+import os
 import sys
 import json
 from bcoding import bencode, bdecode
@@ -69,7 +154,20 @@ from pylaagu.babumoshai import (NSExportSpec,
                                 load_as_namespace, load_as_namespaces,
                                 dispatch)
 from pylaagu.utils import debug
+import logging
 
+logging.basicConfig(level=logging.INFO, filename="pod.log")
+logger = logging.getLogger(__name__)
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, f"{script_dir}")
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+fh = logging.FileHandler('pod.log')
+fh.setLevel(logging.DEBUG)
+logger.addHandler(fh)
+
+logger.info("Starting up pod...")
 
 def read():
     return dict(bdecode(sys.stdin.buffer))
@@ -80,25 +178,19 @@ def write(obj):
     sys.stdout.buffer.flush()
 
 
-nsexport_specs = [
-    NSExportSpec("mlexplore", "mlexplore/__init__.py"),
-    NSExportSpec("mlexplore.hf", "mlexplore/hf.py", export_meta=True),
-    NSExportSpec("huggingface_hub.hf_api", ns_name="hf-api"), ]
-
-
-def main(nsexport_specs: list[NSExportSpec] = nsexport_specs):
+def main_loop(nsexport_specs: list[NSExportSpec]):
     namespaces = load_as_namespaces(nsexport_specs)
+    # for namespace in namespaces.values():
+    #     logger.info(namespace.vars)
     exports = [to_pod_export_format(ns)
-               for ns in namespaces.values()]
-    exports.append({"name": "pylaagu.babumoshai", "vars": [
-        {"name": "load-namespace"}
-    ]})
-    debug(exports)
+               for ns in namespaces.values()
+               if ns is not None]
     while True:
         try:
             msg = read()
             op = msg.get("op")
             if op == "describe":
+                logger.info(exports)
                 write({
                     "format": "json",
                     "namespaces": exports,
@@ -108,16 +200,9 @@ def main(nsexport_specs: list[NSExportSpec] = nsexport_specs):
                 var = msg.get("var")
                 id = msg.get("id")
                 args = json.loads(msg.get("args"))
-                if var == "pylaagu.babumoshai/load-namespace":
-                    ns = load_as_namespace(NSExportSpec(*args))
-                    debug(ns)
-                    exports.append(to_pod_export_format(ns))
-                    debug(exports)
-                    write({"status": ["done"], "id": id, "format": "json", "namespaces": exports})
-                else:
-                    value = dispatch(namespaces, var, args)
-                    write({"status": ["done"], "id": id,
-                           "value": json.dumps(value)})
+                value = dispatch(namespaces, var, args)
+                write({"status": ["done"], "id": id,
+                       "value": json.dumps(value)})
             elif op == "shutdown":
                 debug("Shutting down pod.")
                 break
@@ -126,27 +211,42 @@ def main(nsexport_specs: list[NSExportSpec] = nsexport_specs):
             break
         except Exception as e:
             print("Error", e)
-            write({"status": ["error"], "ex-message": str(e), "id": id})
+            write({"status": ["error"], "ex-message": str(e), "id": msg.get("id")})
+
+
+nsexport_specs = [
+    NSExportSpec("mlitchi", ns_name="py.mlitchi", export_module_imports=True, export_meta=True),
+    NSExportSpec("mlitchi.hfhub_helpers", ns_name="py.hfhub",
+                 export_meta=True, fail_on_error=True),
+    # NSExportSpec("mlitchi.mlx_helpers", ns_name="py.mlx",
+    #              export_meta=True, fail_on_error=False),
+    NSExportSpec("mlitchi.spacy_helpers", ns_name="py.spacy", export_meta=True),
+    NSExportSpec("mlitchi.transformers_helpers", ns_name="py.transformers",
+                 export_meta=True),
+    NSExportSpec("huggingface_hub.hf_api", ns_name="py.hfhub-api",
+                 export_module_imports=True, export_meta=False)
+]
 
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
-        main()
+        main_loop(nsexport_specs)
     else:
         module = sys.argv[1]
         print(load_as_namespace(NSExportSpec(module)))
         sys.exit(0)
+
 ```
 
 Here's a simple babashka session that uses the above script. Notice that there is no code required to dispatch to the appropriate python functions as that is automatically handled.
 
 ```bash
-Babashka v1.3.190 REPL.
+Babashka v1.4.192 REPL.
 Use :repl/quit or :repl/exit to quit the REPL.
 Clojure rocks, Bash reaches.
 ```
 ```clojure
-user=> (babashka.pods/load-pod ["./mlexplore/pod.py"])
+user=> (babashka.pods/load-pod ["./pod.py"])
 #:pod{:id "mlexplore"}
 user=> (require '[cheshire.core :as json])
 nil
