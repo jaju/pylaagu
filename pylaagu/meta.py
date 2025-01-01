@@ -47,6 +47,9 @@ def __encode_function_arg(arg: ast.arg):
 def __encode_function_args(f: ast.FunctionDef):
     return [__encode_function_arg(arg) for arg in f.args.args]
 
+def __encode_function_varargs(f: ast.FunctionDef):
+    return [__encode_function_varargs(varg) for varg in f.args.vararg]
+
 
 def __encode_function(f: ast.FunctionDef) -> FunctionSignature:
     return FunctionSignature(f.name,
@@ -129,6 +132,12 @@ def load_module(module_name: str, file: str = None, fail_on_error=True):
         else:
             return None, None
     return mod, spec.origin
+
+def example_function(arg1, *args, **kwargs):
+    """This exists only to understand, track and demonstrate how more exotic function signatures are handled."""
+    print("First argument:", arg1)
+    print("Positional arguments (*args):", args)
+    print("Keyword arguments (**kwargs):", kwargs)
 
 # CLI
 
