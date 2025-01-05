@@ -9,15 +9,24 @@ class FunctionSignature(dict):
     def __init__(self, name: str, args: list[object], docstring: str, returns):
         super().__init__()
         self.name = name
-        self.args = args
-        self.returns = returns
-        self.docstring = docstring
+        self.args = args or []
+        self.returns = returns or None
+        self.docstring = docstring or None
 
     def __doc(self):
         return f"\nDoc: ''':{self.docstring}'''" if self.docstring else ""
 
     def __repr__(self):
         return f"def {self.name}({", ".join(s['name'] for s in self.args)}) -> {self.returns}" + self.__doc()
+
+    def __encode__(self):
+        return {"name": self.name,
+                "args": [arg for arg in self.args if arg is not None and arg["name"] != "self"],
+                "returns": self.returns,
+                "docstring": self.docstring}
+
+    def encode(self):
+        return {k:v for k, v in self.__encode__().items() if v is not None}
 
 
 class ClassSignature(dict):
@@ -33,6 +42,14 @@ class ClassSignature(dict):
 
     def __str__(self):
         return f"class {self.name}:\n" + self.__doc() + "\n" + "\n".join(map(str, self.functions))
+
+    def __encode__(self):
+        return {"name": self.name,
+                "docstring": self.docstring,
+                "functions": [f.encode() for f in self.functions]}
+
+    def encode(self):
+        return {k:v for k, v in self.__encode__().items() if v}
 
 
 # Private helpers

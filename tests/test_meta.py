@@ -10,6 +10,7 @@ from pylaagu.meta import ClassSignature
 class TestMeta(unittest.TestCase):
 
     def test_function_signatures(self):
+        """This test verifies that function signatures are encoded correctly"""
         file = sys.modules["pylaagu.meta"].__file__
         file = os.path.abspath(file)
         signatures = meta.function_signatures(file, utils.is_public)

@@ -22,10 +22,12 @@ def underlined_string(s: str) -> str:
 
 if output_format == "json":
     import json
-    print(underlined_string("Functions"))
-    print(json.dumps([signature.__dict__ for signature in functions], indent=2))
-    print(underlined_string("Classes"))
-    print(json.dumps([signature.__dict__ for signature in classes], indent=2))
+    if functions:
+        print(underlined_string("Functions"))
+        print(json.dumps([signature.encode() for signature in functions], indent=2))
+    if classes:
+        print(underlined_string("Classes"))
+        print(json.dumps([signature.encode() for signature in classes], indent=2))
 elif output_format == "yaml":
     import yaml
     yaml.emitter.Emitter.prepare_tag = lambda self, tag: '' # https://github.com/yaml/pyyaml/issues/408#issuecomment-673067702
