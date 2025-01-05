@@ -6,10 +6,12 @@ import typing
 
 class FunctionSignature(dict):
     """Holds function signature information."""
-    def __init__(self, name: str, args: list[object], docstring: str, returns):
+    def __init__(self, name: str, args: list[object], vararg, kwarg, docstring: str, returns):
         super().__init__()
         self.name = name
         self.args = args or []
+        self.vararg = vararg or False
+        self.kwarg = kwarg or False
         self.returns = returns or None
         self.docstring = docstring or None
 
@@ -17,11 +19,18 @@ class FunctionSignature(dict):
         return f"\nDoc: ''':{self.docstring}'''" if self.docstring else ""
 
     def __repr__(self):
-        return f"def {self.name}({", ".join(s['name'] for s in self.args)}) -> {self.returns}" + self.__doc()
+        args = ", ".join(s['name'] for s in self.args)
+        if self.vararg:
+            args += ", *" + self.vararg["name"]
+        if self.kwarg:
+            args += ", **" + self.kwarg["name"]
+        return f"def {self.name}({args}) -> {self.returns}" + self.__doc()
 
     def __encode__(self):
         return {"name": self.name,
                 "args": [arg for arg in self.args if arg is not None and arg["name"] != "self"],
+                "varargs": self.vararg,
+                "kwargs": self.kwarg,
                 "returns": self.returns,
                 "docstring": self.docstring}
 
@@ -64,13 +73,25 @@ def __encode_function_arg(arg: ast.arg):
 def __encode_function_args(f: ast.FunctionDef):
     return [__encode_function_arg(arg) for arg in f.args.args]
 
-def __encode_function_varargs(f: ast.FunctionDef):
-    return [__encode_function_varargs(varg) for varg in f.args.vararg]
 
+def __encode_function_vararg(f: ast.FunctionDef) -> dict | None:
+    if f.args.vararg:
+        return {"name": f.args.vararg.arg}
+    else:
+        return None
+
+
+def __encode_function_kwarg(f: ast.FunctionDef) -> str | None:
+    if f.args.kwarg:
+        return {"name": f.args.kwarg.arg}
+    else:
+        return None
 
 def __encode_function(f: ast.FunctionDef) -> FunctionSignature:
     return FunctionSignature(f.name,
                              __encode_function_args(f),
+                             __encode_function_vararg(f),
+                             __encode_function_kwarg(f),
                              ast.get_docstring(f),
                              ast.unparse(f.returns) if f.returns else None)
 
@@ -150,13 +171,14 @@ def load_module(module_name: str, file: str = None, fail_on_error=True):
             return None, None
     return mod, spec.origin
 
-def example_function(arg1, *args, **kwargs):
+# CLI
+
+def example_function(arg1=True, arg2=False, *args, **kwargs):
     """This exists only to understand, track and demonstrate how more exotic function signatures are handled."""
     print("First argument:", arg1)
+    print("Second argument:", arg2)
     print("Positional arguments (*args):", args)
     print("Keyword arguments (**kwargs):", kwargs)
-
-# CLI
 
 def _main():
     if len(sys.argv) < 2:
@@ -177,7 +199,9 @@ def _main():
         print("Class signatures:")
         print("-----------------")
         for sig in class_sigs:
+            print("<BEGIN>")
             print(sig)
+            print("<END>")
         print("\n")
 
 

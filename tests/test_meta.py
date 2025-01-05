@@ -6,7 +6,6 @@ import pylaagu.meta as meta
 import pylaagu.utils as utils
 from pylaagu.meta import ClassSignature
 
-
 class TestMeta(unittest.TestCase):
 
     def test_function_signatures(self):
@@ -17,7 +16,19 @@ class TestMeta(unittest.TestCase):
         signatures = dict(map(lambda s: [s.name, s], signatures))
         self.assertTrue(signatures["function_signatures"] is not None, msg="Method function_signatures not found in signatures")
         self.assertTrue(signatures["class_signatures"] is not None, msg="Method class_signatures not found in signatures")
+        self.assertTrue(signatures["example_function"] is not None, msg="Method class_signatures not found in signatures")
 
+
+    def test_example_function_details(self):
+        file = sys.modules["pylaagu.meta"].__file__
+        file = os.path.abspath(file)
+        signatures = meta.function_signatures(file, utils.is_public)
+        signatures = dict(map(lambda s: [s.name, s], signatures))
+        example_function = signatures["example_function"]
+        self.assertTrue(example_function is not None, msg="Method class_signatures not found in signatures")
+        self.assertEqual(example_function.args, [{"name": "arg1"}, {"name": "arg2"}])
+        self.assertEqual(example_function.vararg, {"name": "args"})
+        self.assertEqual(example_function.kwarg, {"name": "kwargs"})
 
     def test_class_signatures(self):
         file = sys.modules["pylaagu.meta"].__file__
