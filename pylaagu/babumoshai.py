@@ -86,11 +86,11 @@ def load_as_namespace(nsexport_spec, function_name_filter=is_public):
         logger.error(f"Failed to load module {nsexport_spec.module_name}. Skipping...")
         return None
 
-    vars = module_to_pod_format_functions(module,
+    _vars = module_to_pod_format_functions(module,
                                           nsexport_spec.export_meta,
                                           function_filter)
 
-    return Namespace(nsexport_spec.ns_name, vars, module)
+    return Namespace(nsexport_spec.ns_name, _vars, module)
 
 
 def load_as_namespaces(nsexport_specs, function_name_filter=is_public):
