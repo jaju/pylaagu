@@ -6,7 +6,7 @@ import typing
 
 class FunctionSignature(dict):
     """Holds function signature information."""
-    def __init__(self, name: str, args: list[object], vararg, kwarg, docstring: str, returns):
+    def __init__(self, name: str, args: list[object], vararg, kwarg, returns, docstring: str):
         super().__init__()
         self.name = name
         self.args = args or []
@@ -88,12 +88,8 @@ def __encode_function_kwarg(f: ast.FunctionDef) -> str | None:
         return None
 
 def __encode_function(f: ast.FunctionDef) -> FunctionSignature:
-    return FunctionSignature(f.name,
-                             __encode_function_args(f),
-                             __encode_function_vararg(f),
-                             __encode_function_kwarg(f),
-                             ast.get_docstring(f),
-                             ast.unparse(f.returns) if f.returns else None)
+    return FunctionSignature(f.name, __encode_function_args(f), __encode_function_vararg(f), __encode_function_kwarg(f),
+                             ast.unparse(f.returns) if f.returns else None, ast.get_docstring(f))
 
 
 def __functions_at_node(node: ast.AST,
@@ -173,12 +169,13 @@ def load_module(module_name: str, file: str = None, fail_on_error=True):
 
 # CLI
 
-def example_function(arg1=True, arg2=False, *args, **kwargs):
+def example_function(arg1=True, arg2=False, *args, **kwargs) -> int:
     """This exists only to understand, track and demonstrate how more exotic function signatures are handled."""
     print("First argument:", arg1)
     print("Second argument:", arg2)
     print("Positional arguments (*args):", args)
     print("Keyword arguments (**kwargs):", kwargs)
+    return 1
 
 def _main():
     if len(sys.argv) < 2:

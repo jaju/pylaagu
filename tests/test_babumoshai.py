@@ -25,6 +25,6 @@ class TestBabumoshai(unittest.TestCase):
         ns = pylaagu.babumoshai.load_as_namespace(nsspec)
         foo = ns.get("function-signatures")
         self.assertTrue(foo is not None)
-        self.assertEqual(foo['name'], "function-signatures")
+        self.assertEqual("function-signatures", foo['name'])
         self.assertEqual("py.meta", ns.name)
         self.assertTrue(ns.get('ClassSignature') is None) # Classes should not be exported
